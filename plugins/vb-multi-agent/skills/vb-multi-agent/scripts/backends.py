@@ -1,15 +1,25 @@
 """Run one role through a local, non-interactive model client."""
 
+from functools import lru_cache
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import signal
 import subprocess
+import sys
 import tempfile
 
 
 BACKENDS = {"codex", "kimi", "dsh", "custom"}
+CODEX_APP_PATHS = (
+    "ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
+    "ChatGPT.app/Contents/Resources/codex-cli/bin/codex",
+    "ChatGPT.app/Contents/Resources/codex",
+    "Codex.app/Contents/Resources/codex",
+)
+CODEX_VERSION = re.compile(r"codex-cli[ \t]+[0-9]+\.[0-9]+\.[0-9]+(?:[-+]\S+)?")
 KIMI_EFFORTS = {"low", "medium", "high", "xhigh", "max"}
 KIMI_AGENT = """---
 name: vb-multi-agent-worker
@@ -86,9 +96,56 @@ def _custom_command(profile: dict) -> list[str]:
     return command
 
 
+def _is_codex_cli(path: str, cwd: Path) -> bool:
+    try:
+        version = _capture([path, "--version"], None, cwd, os.environ.copy(), 5, "codex")
+    except RuntimeError:
+        return False
+    return CODEX_VERSION.fullmatch(version.strip()) is not None
+
+
+@lru_cache(maxsize=32)
+def _codex_executable(explicit: str | None, search_path: str, cwd: Path, home: Path) -> str:
+    if explicit is not None:
+        path = shutil.which(os.path.expanduser(explicit), path=search_path)
+        if path is None:
+            raise RuntimeError(f"codex: configured executable {explicit!r} is unavailable.")
+        path = os.path.abspath(path)
+        if not _is_codex_cli(path, cwd):
+            raise RuntimeError(
+                f"codex: configured executable {explicit!r} did not return a valid version. "
+                "Check the path or remove executable to enable automatic discovery."
+            )
+        return path
+
+    candidates = [
+        shutil.which("codex", path=directory)
+        for directory in search_path.split(os.pathsep)
+        if directory
+    ]
+    if sys.platform == "darwin":
+        candidates.extend(
+            shutil.which(str(applications / relative))
+            for relative in CODEX_APP_PATHS
+            for applications in (Path("/Applications"), home / "Applications")
+        )
+    paths = dict.fromkeys(os.path.abspath(path) for path in candidates if path is not None)
+    for path in paths:
+        if _is_codex_cli(path, cwd):
+            return path
+    raise RuntimeError(
+        "codex: no working CLI found in PATH or the ChatGPT/Codex application bundles. "
+        "Install Codex CLI or set executable to a working binary."
+    )
+
+
 def check_executable(profile: dict) -> str:
     validate_profile(profile)
     backend = profile["backend"]
+    if backend == "codex":
+        return _codex_executable(
+            profile.get("executable"), os.environ.get("PATH", os.defpath), Path.cwd(), Path.home()
+        )
     name = _custom_command(profile)[0] if backend == "custom" else profile.get("executable", backend)
     name = os.path.expanduser(name)
     path = shutil.which(name)
@@ -97,7 +154,9 @@ def check_executable(profile: dict) -> str:
     return os.path.abspath(path)
 
 
-def _codex_command(executable: str, profile: dict, cwd: Path, access: str) -> list[str]:
+def _codex_command(
+    executable: str, profile: dict, cwd: Path, access: str, shell_path: str | None
+) -> list[str]:
     command = [
         executable, "--ask-for-approval", "never", "exec", "--sandbox", access,
         "--ephemeral", "--ignore-user-config", "--color", "never",
@@ -117,6 +176,11 @@ def _codex_command(executable: str, profile: dict, cwd: Path, access: str) -> li
     )
     for setting in settings:
         command += ["-c", setting]
+    if shell_path is not None:
+        command += [
+            "-c", "features.shell_snapshot=false",
+            "-c", "shell_environment_policy.set.PATH=" + json.dumps(shell_path, ensure_ascii=False),
+        ]
     if "model" in profile:
         command += ["--model", profile["model"]]
     if "reasoning" in profile:
@@ -238,16 +302,24 @@ def _capture(
 
 
 def run_agent(
-    profile: dict, prompt: str, cwd: Path, timeout: float, *, writable: bool = False
+    profile: dict,
+    prompt: str,
+    cwd: Path,
+    timeout: float,
+    *,
+    writable: bool = False,
+    shell_path: str | None = None,
 ) -> str:
     executable = check_executable(profile)
     backend = profile["backend"]
     access = "workspace-write" if writable else "read-only"
     env = os.environ.copy()
+    if shell_path is not None:
+        env["PATH"] = shell_path
     with tempfile.TemporaryDirectory(prefix="vb-agent-") as scratch:
         path = Path(scratch)
         if backend == "codex":
-            command = _codex_command(executable, profile, cwd, access)
+            command = _codex_command(executable, profile, cwd, access, shell_path)
         elif backend == "kimi":
             command = _kimi_command(executable, profile, prompt, path, writable)
             if "reasoning" in profile:

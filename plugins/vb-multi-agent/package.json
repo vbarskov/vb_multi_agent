@@ -1,0 +1,23 @@
+{
+  "name": "vb-multi-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Run parallel development with independently configured Codex, Kimi, and DeepSeek Harness agents.",
+  "main": "./dsh/lib/index.js",
+  "exports": {
+    ".": "./dsh/lib/index.js",
+    "./package.json": "./package.json"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./dsh/cordis.patch.yml"
+    }
+  },
+  "scripts": {
+    "test": "node --test"
+  }
+}

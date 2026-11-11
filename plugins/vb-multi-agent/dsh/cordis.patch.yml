@@ -1,0 +1,8 @@
+# DSH-слой VB Multi Agent: одна строка на навык.
+#
+# `name` — имя этого пакета: профиль DSH разрешает его из
+# `~/.dsh/profiles/<профиль>/node_modules` после
+# `dsh plugin --profile <профиль> add link:<каталог плагина>`.
+- insert:
+    - id: vb-multi-agent
+      name: vb-multi-agent
