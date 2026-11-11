@@ -38,13 +38,21 @@ $vb-multi-agent Добавь проверку срока действия ток
 
 ### В DeepSeek Harness
 
-Каталог `plugins/vb-multi-agent` — самостоятельный пакет DeepSeek Harness: `package.json` объявляет `dsh.bundle.patch`, поэтому профиль получает навык из `skills/vb-multi-agent/SKILL.md` как bundled-провайдер. Отдельно править `cordis.patch.yml` не нужно.
+Пакет DeepSeek Harness — корень репозитория: `package.json` объявляет `dsh.bundle.patch`, поэтому профиль получает навык из `plugins/vb-multi-agent/skills/vb-multi-agent/SKILL.md` как bundled-провайдер. Отдельно править `cordis.patch.yml` не нужно.
 
-Настольное приложение использует профиль `desktop`, запуск `dsh web` из терминала — `web`. Подключайте каталог в тот профиль, которым пользуетесь; ниже — `desktop`. `link:` не копирует файлы, поэтому правки в каталоге видны без переустановки. Путь указывайте абсолютный: относительный pnpm разрешает от каталога профиля. Отдельно ставить pnpm не нужно, `dsh plugin` использует встроенный.
+Настольное приложение использует профиль `desktop`, запуск `dsh web` из терминала — `web`. Ниже — `desktop`. Отдельно ставить пакетный менеджер не нужно: `dsh plugin` использует встроенный pnpm.
+
+Установка из GitHub:
 
 ```sh
 DSH="/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/bin/dsh"
-"$DSH" plugin --profile desktop add link:/полный/путь/vb_multi_agent/plugins/vb-multi-agent
+"$DSH" plugin --profile desktop add github:vbarskov/vb_multi_agent
+```
+
+Для работы с локальными правками поставьте каталог ссылкой — тогда изменения видны без переустановки (`link:` не копирует файлы). Путь указывайте абсолютный: относительный pnpm разрешает от каталога профиля.
+
+```sh
+"$DSH" plugin --profile desktop add link:/полный/путь/vb_multi_agent
 ```
 
 `plugin add` сам дописывает `vb-multi-agent` в `dependencies` и `dsh.profile.bundles` файла `~/.dsh/profiles/desktop/package.json`; проверьте обе записи. Затем начните новый чат: навык появится в каталоге и будет доступен как `/vb-multi-agent` или через инструмент `skill`. Если навык не появился, перезапустите DeepSeek Harness: новый бандл подхватывается горячей перезагрузкой не во всех случаях.
@@ -53,9 +61,9 @@ DSH="/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/bin/dsh"
 /vb-multi-agent Добавь проверку срока действия токена. Конфиг ролей в /absolute/path/to/roles.json.
 ```
 
-Тот же установщик есть в интерфейсе: **боковая панель → Плагины → Добавить плагин → Установите сторонний плагин**, в поле «Название или адрес пакета» — абсолютный путь к каталогу `plugins/vb-multi-agent`, затем **Установить** и **Включить сейчас**.
+Тот же установщик есть в интерфейсе: **боковая панель → Плагины → Добавить плагин → Установите сторонний плагин**, в поле «Название или адрес пакета» — `https://github.com/vbarskov/vb_multi_agent` или локальный путь к корню репозитория, затем **Установить** и **Включить сейчас**.
 
-Обновление исходников: `git pull`, повторная установка не нужна. Удаление: `"$DSH" plugin --profile desktop remove vb-multi-agent`, запись из `bundles` уходит сама.
+Обновление: для `link:` достаточно `git pull`; после новых коммитов в GitHub удалите `github:`-установку и поставьте заново. Удаление: `"$DSH" plugin --profile desktop remove vb-multi-agent`, запись из `bundles` уходит сама.
 
 ## Настройка ролей
 

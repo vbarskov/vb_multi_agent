@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const skillName = 'vb-multi-agent';
+const skillDirectory = path.join(root, 'plugins', skillName, 'skills', skillName);
 
 function frontmatter(text) {
   const block = text.match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] ?? '';
@@ -18,13 +19,14 @@ function frontmatter(text) {
   };
 }
 
-test('пакет объявляет DSH-слой, точку входа и патч', async () => {
+test('корневой пакет объявляет DSH-слой, точку входа и патч', async () => {
   const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
   assert.equal(pkg.name, skillName);
   assert.equal(pkg.type, 'module');
   assert.equal(pkg.dsh.bundle.patch, './dsh/cordis.patch.yml');
   assert.equal(pkg.main, './dsh/lib/index.js');
   assert.deepEqual(pkg.exports, { '.': './dsh/lib/index.js', './package.json': './package.json' });
+  assert.ok(existsSync(path.join(root, 'dsh', 'cordis.patch.yml')));
 
   const patch = await readFile(path.join(root, 'dsh/cordis.patch.yml'), 'utf8');
   assert.match(patch, /- insert:/);
@@ -32,11 +34,19 @@ test('пакет объявляет DSH-слой, точку входа и па�
   assert.match(patch, new RegExp(`^ {6}name: ${skillName}$`, 'm'));
 });
 
-test('манифесты Codex и DSH называют одну версию', async () => {
-  const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
-  const codex = JSON.parse(await readFile(path.join(root, 'plugin.json'), 'utf8'));
-  assert.equal(codex.version, pkg.version, 'plugin.json: версия не совпадает с package.json');
-  assert.equal(codex.name, pkg.name, 'plugin.json: имя не совпадает с package.json');
+test('DSH-слой объявлен только в корне репозитория', () => {
+  assert.equal(existsSync(path.join(root, 'plugins', skillName, 'package.json')), false);
+  assert.equal(existsSync(path.join(root, 'plugins', skillName, 'dsh')), false);
+});
+
+test('манифесты Codex, Kimi и DSH называют одну версию', async () => {
+  const read = relative => readFile(path.join(root, relative), 'utf8').then(JSON.parse);
+  const pkg = await read('package.json');
+  for (const manifest of ['kimi.plugin.json', 'plugins/vb-multi-agent/kimi.plugin.json', 'plugins/vb-multi-agent/plugin.json']) {
+    const value = await read(manifest);
+    assert.equal(value.version, pkg.version, `${manifest}: версия не совпадает с package.json`);
+    assert.equal(value.name, pkg.name, `${manifest}: имя не совпадает с package.json`);
+  }
 });
 
 test('пакет импортируется по имени так же, как его загружает DSH', async () => {
@@ -72,7 +82,7 @@ test('плагин регистрирует навык с метаданными
   assert.equal(candidate.rank, 600);
   assert.equal(candidate.invocation.modelInvocable, true);
   assert.equal(candidate.invocation.userInvocable, true);
-  assert.equal(candidate.resourceBase.path, path.join(root, 'skills', skillName, '/'));
+  assert.equal(candidate.resourceBase.path, path.join(skillDirectory, '/'));
 
   const text = await readFile(candidate.path, 'utf8');
   assert.deepEqual(frontmatter(text), { name: candidate.name, description: candidate.description });
@@ -86,7 +96,6 @@ test('плагин регистрирует навык с метаданными
 });
 
 test('навык указывает на существующие скрипты запуска', () => {
-  const directory = path.join(root, 'skills', skillName);
-  assert.ok(existsSync(path.join(directory, 'scripts', 'run.py')));
-  assert.ok(existsSync(path.join(directory, 'scripts', 'config.example.json')));
+  assert.ok(existsSync(path.join(skillDirectory, 'scripts', 'run.py')));
+  assert.ok(existsSync(path.join(skillDirectory, 'scripts', 'config.example.json')));
 });

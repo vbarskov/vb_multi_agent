@@ -3,8 +3,11 @@
  *
  * Регистрирует навык `vb-multi-agent` как bundled-провайдер `ctx.skills`,
  * чтобы он был доступен в DeepSeek Harness в любом рабочем каталоге.
- * Инструкции читаются из того же `skills/vb-multi-agent/SKILL.md`, что
- * используют Codex и Kimi Code, поэтому текст один.
+ * Инструкции читаются из `plugins/vb-multi-agent/skills/vb-multi-agent/SKILL.md`,
+ * который используют Codex и Kimi Code, поэтому текст один.
+ *
+ * Пакет DSH — это корень репозитория: так DSH ставит его прямо из GitHub
+ * (`github:vbarskov/vb_multi_agent`) или из локальной копии через `link:`.
  *
  * Контракт реестра DSH: у провайдера есть `name`, и каждый кандидат из
  * `list()` обязан вернуть это же значение в поле `provider`. Иначе реестр
@@ -14,13 +17,14 @@
  * `resourceBase` передаётся абсолютный путь каталога навыка.
  *
  * Пакет импортирует только встроенные модули Node.js и собственные файлы
- * репозитория: так `link:`-установка работает без зависимостей в профиле DSH.
+ * репозитория: так установка из GitHub или `link:` работает без зависимостей
+ * в профиле DSH.
  */
 import { readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
-/** Навык плагина; каталог `skills/<имя>` и `name` в SKILL.md должны совпадать. */
+/** Навык плагина; каталог `plugins/vb-multi-agent/skills/<имя>` и `name` в SKILL.md совпадают. */
 export const SKILL_NAME = 'vb-multi-agent';
 
 /** Ранг bundled-провайдера из `@deepseek-ai/dsh-skill`. */
@@ -37,12 +41,12 @@ const SKILL_NAME_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 /** URL файла навыка. */
 function skillFile() {
-  return new URL(`../../skills/${SKILL_NAME}/SKILL.md`, import.meta.url);
+  return new URL(`../../plugins/vb-multi-agent/skills/${SKILL_NAME}/SKILL.md`, import.meta.url);
 }
 
 /** Абсолютный путь каталога навыка: относительно него работают `scripts/…`. */
 function skillDirectory() {
-  return fileURLToPath(new URL(`../../skills/${SKILL_NAME}/`, import.meta.url));
+  return fileURLToPath(new URL(`../../plugins/vb-multi-agent/skills/${SKILL_NAME}/`, import.meta.url));
 }
 
 /** Убрать YAML-описание, оставив тело инструкций. */

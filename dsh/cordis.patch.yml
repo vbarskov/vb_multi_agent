@@ -1,0 +1,10 @@
+# DSH-слой VB Multi Agent: одна строка на навык.
+#
+# Этот файл — патч корневого пакета репозитория, поэтому DSH ставит плагин
+# прямо из GitHub (`dsh plugin --profile <профиль> add github:vbarskov/vb_multi_agent`)
+# или из локальной копии (`add link:<абсолютный путь к репозиторию>`).
+# `name` — имя пакета из `package.json`; профиль DSH разрешает его из
+# `~/.dsh/profiles/<профиль>/node_modules`.
+- insert:
+    - id: vb-multi-agent
+      name: vb-multi-agent
