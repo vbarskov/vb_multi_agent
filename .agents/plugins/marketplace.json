@@ -1,0 +1,20 @@
+{
+  "name": "vb-multi-agent-local",
+  "interface": {
+    "displayName": "VB Multi Agent"
+  },
+  "plugins": [
+    {
+      "name": "vb-multi-agent",
+      "source": {
+        "source": "local",
+        "path": "./plugins/vb-multi-agent"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development"
+    }
+  ]
+}

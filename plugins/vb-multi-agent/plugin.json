@@ -1,0 +1,15 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "vb-multi-agent",
+  "version": "0.1.0",
+  "description": "Run parallel development with independently configured Codex, Kimi, and DeepSeek Harness agents.",
+  "extensions": {
+    "com.openai": {
+      "requires_local_executor": true,
+      "interface": {
+        "logo": "./assets/agents_bot.png",
+        "composerIcon": "./assets/agents_bot.png"
+      }
+    }
+  }
+}

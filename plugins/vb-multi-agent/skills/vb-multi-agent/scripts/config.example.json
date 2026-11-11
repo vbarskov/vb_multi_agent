@@ -1,0 +1,10 @@
+{
+  "max_parallel": 3,
+  "timeout_seconds": 600,
+  "roles": {
+    "router": {"backend": "codex"},
+    "developer": {"backend": "codex"},
+    "tester": {"backend": "codex"},
+    "reviewer": {"backend": "codex"}
+  }
+}
