@@ -1,0 +1,10 @@
+{
+  "name": "vb-multi-agent",
+  "version": "0.1.0",
+  "description": "Run parallel development with independently configured Codex, Kimi, and DeepSeek Harness agents.",
+  "skills": "./plugins/vb-multi-agent/skills/",
+  "interface": {
+    "displayName": "VB Multi Agent",
+    "shortDescription": "Parallel Git development with independently configured coding agents"
+  }
+}

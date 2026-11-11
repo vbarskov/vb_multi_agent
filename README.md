@@ -6,10 +6,16 @@
 
 ### В Kimi Code
 
-Введите в командной строке Kimi Code путь к каталогу плагина:
+Введите в командной строке Kimi Code:
 
 ```text
-/plugins install /Users/victorbarskov/Developer/vb_multi_agent/plugins/vb-multi-agent
+/plugins install https://github.com/vbarskov/vb_multi_agent
+```
+
+Также можно установить локальную копию, указав путь к корню репозитория:
+
+```text
+/plugins install /Users/victorbarskov/Developer/vb_multi_agent
 ```
 
 После установки выполните `/reload` или начните новый чат. Вызовите навык через `/skill:vb-multi-agent:vb-multi-agent` и передайте задачу. Если настроили роли, укажите абсолютный путь к JSON-конфигу.
